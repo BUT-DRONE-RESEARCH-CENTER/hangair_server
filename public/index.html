@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DrOn</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+	<style>
+		body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.top-bar {
+    background-color: #4CAF50;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.container {
+    display: flex;
+    margin-top: 50px;
+}
+
+.left-menu {
+    width: 200px;
+    background-color: #f8f8f8;
+    border-right: 1px solid #ddd;
+    padding-top: 20px;
+    position: fixed;
+    top: 50px;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+.left-menu ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.left-menu ul li {
+    padding: 10px;
+    text-align: center;
+}
+
+.left-menu ul li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+}
+
+.left-menu ul li a:hover {
+    background-color: #ddd;
+}
+
+.content {
+    margin-left: 200px;
+    padding: 20px;
+    flex-grow: 1;
+}
+
+section {
+    margin-bottom: 20px;
+}
+
+h2 {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+	</style>
+</head>
+<body>
+	<div class="top-bar">
+        <p>Last packet recieved at <span id="last_packet">unknown</span></p>
+    </div>
+    <div class="container">
+        <div class="left-menu">
+            <ul>
+				<li><a href="#media">Videá</a></li>
+                <li><a href="#mapa">Mapa</a></li>
+                <li><a href="#info">Info</a></li>
+                <li><a href="#nastavenia">Nastavenia</a></li>
+            </ul>
+        </div>
+        <div class="content">
+			Podľa dohody sem pôjde ovládanie hangáru (teplota, úlohy pre drona,...)
+			<section id="media">
+                <h2>Videá</h2>
+                <p>Buď už "zmiešané" video zo všetkých kamier (ak >1) alebo viac playerov</p>
+            </section>
+            <section id="mapa">
+                <h2>Mapa</h2>
+                <p>Render mapy</p>
+            </section>
+            <section id="info">
+                <h2>Info</h2>
+                <p>Zatiaľ len packety, neskôr pekná tabuľka</p>
+				<div id="info_content"></div>
+            </section>
+            <section id="nastavenia">
+                <h2>Nastavenia</h2>
+                <p>Voláke misc nastavenia, napr. dĺžka mapy...</p>
+            </section>
+        </div>
+    </div>
+
+	<script>
+		// Connect to the server
+		const socket = io();
+
+		// Handle socket events
+		socket.on('connect', () => {
+			console.log('Connected to server');
+		});
+
+		socket.on('disconnect', () => {
+			console.log('Disconnected from server');
+		});
+
+		// Send data to the server
+		socket.emit('message', 'Hello, server!');
+
+		// Receive data from the server
+		socket.on('packet', (data) => {
+			console.log('Received message from server:', data);
+			document.getElementById("info_content").innerText = data
+			if (Object.keys(data).length == 0){
+				document.getElementById("last_packet").innerHTML = "never"
+				return
+			}
+			let packet = JSON.parse(data)
+			document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString()
+			
+		});
+	</script>
+</body>
+</html>
