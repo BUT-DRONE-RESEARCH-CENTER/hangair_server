@@ -3,6 +3,9 @@
 <head>
 	<title>DrOn</title>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 	<style>
 		body {
     margin: 0;
@@ -19,6 +22,9 @@
     top: 0;
     left: 0;
     z-index: 1000;
+}
+#map {
+    height: 400px;
 }
 
 .container {
@@ -94,7 +100,9 @@ h2 {
             </section>
             <section id="mapa">
                 <h2>Mapa</h2>
-                <p>Render mapy</p>
+                <div id="map"></div>
+                <a href="https://www.flaticon.com/free-icons/drone-case" title="drone case icons">Drone case icons created by Freepik - Flaticon</a>
+                <a href="https://www.flaticon.com/free-icons/home-button" title="home button icons">Home button icons created by Freepik - Flaticon</a>
             </section>
             <section id="info">
                 <h2>Info</h2>
@@ -136,6 +144,49 @@ h2 {
 			document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString()
 			
 		});
+
+        var map = L.map('map').setView([51.505, -0.09], 13);
+
+        // Add a tile layer to add to our map, in this case it's a OpenStreetMap tile layer.
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Define two geographical points
+        var pointA = [51.505, -0.09];
+        var pointB = [51.51, -0.1];
+
+
+
+        var droneIcon = L.icon({
+            iconUrl: 'drone.png',
+            iconSize:     [64, 64], // size of the icon
+            iconAnchor:   [32, 32], // point of the icon which will correspond to marker's location
+            popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
+        });
+        var homeIcon = L.icon({
+            iconUrl: 'home.png',
+            iconSize:     [64, 64], // size of the icon
+            iconAnchor:   [32, 32], // point of the icon which will correspond to marker's location
+            popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
+        });
+        // Add markers to the map at the defined points
+        L.marker(pointA, {icon: homeIcon}).addTo(map)
+            .bindPopup("Hangár")
+
+        L.marker(pointB,{icon: droneIcon}).addTo(map)
+            .bindPopup('Dron')
+
+        // Draw a line between the two points
+        var polyline = L.polyline([pointA, pointB], {color: 'red'}).addTo(map);
+
+        
+        console.log(polyline.getBounds())
+
+        // Zoom the map to the polyline
+        map.fitBounds(polyline.getBounds());
+        
+
 	</script>
 </body>
 </html>
