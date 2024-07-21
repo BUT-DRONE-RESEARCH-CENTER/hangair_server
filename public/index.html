@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-geometryutil"></script>
 	<style>
 		body {
     margin: 0;
@@ -26,7 +27,14 @@
 #map {
     height: 400px;
 }
-
+.distance-label {
+    background-color: white;
+    border: 1px solid black;
+    padding: 5px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 14px;
+}
 .container {
     display: flex;
     margin-top: 50px;
@@ -179,9 +187,18 @@ h2 {
 
         // Draw a line between the two points
         var polyline = L.polyline([pointA, pointB], {color: 'red'}).addTo(map);
+        var distance = L.GeometryUtil.distance(map, L.latLng(pointA), L.latLng(pointB))
+        var centerLatLng = [(pointA[0] + pointB[0]) / 2, (pointA[1] + pointB[1]) / 2]; // Midpoint
+        var distanceLabel = L.divIcon({
+            className: 'distance-label',
+            html: distance.toFixed(2) + ' meters',
+            iconSize: [100, 40],
+            iconAnchor: [50, 20]
+        });
 
+    L.marker(centerLatLng, { icon: distanceLabel }).addTo(map);
         
-        console.log(polyline.getBounds())
+        
 
         // Zoom the map to the polyline
         map.fitBounds(polyline.getBounds());
