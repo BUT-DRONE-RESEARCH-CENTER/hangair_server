@@ -161,8 +161,8 @@ h2 {
         }).addTo(map);
 
         // Define two geographical points
-        var pointA = [51.505, -0.09];
-        var pointB = [51.51, -0.1];
+        var drone_point = [51.505, -0.09];
+        var hangair_point = [51.51, -0.1];
 
 
 
@@ -179,16 +179,16 @@ h2 {
             popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
         });
         // Add markers to the map at the defined points
-        L.marker(pointA, {icon: homeIcon}).addTo(map)
+        var droneMarker = L.marker(drone_point, {icon: homeIcon}).addTo(map)
             .bindPopup("Hangár")
 
-        L.marker(pointB,{icon: droneIcon}).addTo(map)
+        L.marker(hangair_point,{icon: droneIcon, draggable: true}).addTo(map)
             .bindPopup('Dron')
 
         // Draw a line between the two points
-        var polyline = L.polyline([pointA, pointB], {color: 'red'}).addTo(map);
-        var distance = L.GeometryUtil.distance(map, L.latLng(pointA), L.latLng(pointB))
-        var centerLatLng = [(pointA[0] + pointB[0]) / 2, (pointA[1] + pointB[1]) / 2]; // Midpoint
+        var polyline = L.polyline([drone_point, hangair_point], {color: 'red'}).addTo(map);
+        var distance = L.GeometryUtil.distance(map, L.latLng(drone_point), L.latLng(hangair_point))
+        var centerLatLng = [(drone_point[0] + hangair_point[0]) / 2, (drone_point[1] + hangair_point[1]) / 2]; // Midpoint
         var distanceLabel = L.divIcon({
             className: 'distance-label',
             html: distance.toFixed(2) + ' meters',
@@ -196,13 +196,25 @@ h2 {
             iconAnchor: [50, 20]
         });
 
-    L.marker(centerLatLng, { icon: distanceLabel }).addTo(map);
+        L.marker(centerLatLng, { icon: distanceLabel }).addTo(map);
         
         
 
         // Zoom the map to the polyline
         map.fitBounds(polyline.getBounds());
         
+        function updatePolyline() {
+            var newPointB = droneMarker.getLatLng();
+            polyline.setLatLngs([drone_point, newPointB]);
+            var newDistance = L.GeometryUtil.distance(map, L.latLng(drone_point), newPointB);
+            distanceLabel.options.html = newDistance.toFixed(2) + ' meters';
+            distanceMarker.setIcon(distanceLabel);
+            distanceMarker.setLatLng([(drone_point[0] + newPointB.lat) / 2, (drone_point[1] + newPointB.lng) / 2]);
+        }
+        droneMarker.on('moveend', function(e) {
+            console.log("fired")
+            updatePolyline();
+        });
 
 	</script>
 </body>
