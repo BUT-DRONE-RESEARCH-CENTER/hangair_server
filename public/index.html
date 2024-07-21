@@ -1,221 +1,213 @@
 <!DOCTYPE html>
-<html>
-<head>
-	<title>DrOn</title>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-geometryutil"></script>
-	<style>
-		body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-}
-
-.top-bar {
-    background-color: #4CAF50;
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    width: 100%;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-}
-#map {
-    height: 400px;
-}
-.distance-label {
-    background-color: white;
-    border: 1px solid black;
-    padding: 5px;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 14px;
-}
-.container {
-    display: flex;
-    margin-top: 50px;
-}
-
-.left-menu {
-    width: 200px;
-    background-color: #f8f8f8;
-    border-right: 1px solid #ddd;
-    padding-top: 20px;
-    position: fixed;
-    top: 50px;
-    bottom: 0;
-    overflow-y: auto;
-}
-
-.left-menu ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.left-menu ul li {
-    padding: 10px;
-    text-align: center;
-}
-
-.left-menu ul li a {
-    text-decoration: none;
-    color: #333;
-    display: block;
-}
-
-.left-menu ul li a:hover {
-    background-color: #ddd;
-}
-
-.content {
-    margin-left: 200px;
-    padding: 20px;
-    flex-grow: 1;
-}
-
-section {
-    margin-bottom: 20px;
-}
-
-h2 {
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-}
-	</style>
-</head>
-<body>
-	<div class="top-bar">
-        <p>Last packet recieved at <span id="last_packet">unknown</span></p>
-    </div>
-    <div class="container">
-        <div class="left-menu">
-            <ul>
-				<li><a href="#media">Videá</a></li>
-                <li><a href="#mapa">Mapa</a></li>
-                <li><a href="#info">Info</a></li>
-                <li><a href="#nastavenia">Nastavenia</a></li>
-            </ul>
+    <html>
+    <head>
+        <title>DrOn</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+        <script src="https://unpkg.com/leaflet-geometryutil"></script>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+            .top-bar {
+                background-color: #4CAF50;
+                color: white;
+                text-align: center;
+                padding: 10px 0;
+                position: fixed;
+                width: 100%;
+                top: 0;
+                left: 0;
+                z-index: 1000;
+            }
+            #map {
+                height: 400px;
+            }
+            .distance-label {
+                background-color: white;
+                border: 1px solid black;
+                padding: 5px;
+                border-radius: 5px;
+                text-align: center;
+                font-size: 14px;
+            }
+            .container {
+                display: flex;
+                margin-top: 50px;
+            }
+            .left-menu {
+                width: 200px;
+                background-color: #f8f8f8;
+                border-right: 1px solid #ddd;
+                padding-top: 20px;
+                position: fixed;
+                top: 50px;
+                bottom: 0;
+                overflow-y: auto;
+            }
+            .left-menu ul {
+                list-style-type: none;
+                padding: 0;
+            }
+            .left-menu ul li {
+                padding: 10px;
+                text-align: center;
+            }
+            .left-menu ul li a {
+                text-decoration: none;
+                color: #333;
+                display: block;
+            }
+            .left-menu ul li a:hover {
+                background-color: #ddd;
+            }
+            .content {
+                margin-left: 200px;
+                padding: 20px;
+                flex-grow: 1;
+            }
+            section {
+                margin-bottom: 20px;
+            }
+            h2 {
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="top-bar">
+            <p>Last packet recieved at <span id="last_packet">unknown</span></p>
         </div>
-        <div class="content">
-			Podľa dohody sem pôjde ovládanie hangáru (teplota, úlohy pre drona,...)
-			<section id="media">
-                <h2>Videá</h2>
-                <p>Buď už "zmiešané" video zo všetkých kamier (ak >1) alebo viac playerov</p>
-            </section>
-            <section id="mapa">
-                <h2>Mapa</h2>
-                <div id="map"></div>
-                <a href="https://www.flaticon.com/free-icons/drone-case" title="drone case icons">Drone case icons created by Freepik - Flaticon</a>
-                <a href="https://www.flaticon.com/free-icons/home-button" title="home button icons">Home button icons created by Freepik - Flaticon</a>
-            </section>
-            <section id="info">
-                <h2>Info</h2>
-                <p>Zatiaľ len packety, neskôr pekná tabuľka</p>
-				<div id="info_content"></div>
-            </section>
-            <section id="nastavenia">
-                <h2>Nastavenia</h2>
-                <p>Voláke misc nastavenia, napr. dĺžka mapy...</p>
-            </section>
+        <div class="container">
+            <div class="left-menu">
+                <ul>
+                    <li><a href="#media">Videá</a></li>
+                    <li><a href="#mapa">Mapa</a></li>
+                    <li><a href="#info">Info</a></li>
+                    <li><a href="#nastavenia">Nastavenia</a></li>
+                </ul>
+            </div>
+            <div class="content">
+                Podľa dohody sem pôjde ovládanie hangáru (teplota, úlohy pre drona,...)
+                <section id="media">
+                    <h2>Videá</h2>
+                    <p>Buď už "zmiešané" video zo všetkých kamier (ak >1) alebo viac playerov</p>
+                </section>
+                <section id="mapa">
+                    <h2>Mapa</h2>
+                    <div id="map"></div>
+                    <a href="https://www.flaticon.com/free-icons/drone-case" title="drone case icons">Drone case icons created by Freepik - Flaticon</a>
+                    <a href="https://www.flaticon.com/free-icons/home-button" title="home button icons">Home button icons created by Freepik - Flaticon</a>
+                </section>
+                <section id="info">
+                    <h2>Info</h2>
+                    <p>Zatiaľ len packety, neskôr pekná tabuľka</p>
+                    <div id="info_content"></div>
+                </section>
+                <section id="nastavenia">
+                    <h2>Nastavenia</h2>
+                    <p>Voláke misc nastavenia, napr. dĺžka mapy...</p>
+                </section>
+            </div>
         </div>
-    </div>
 
-	<script>
-		// Connect to the server
-		const socket = io();
+        <script>
+            // Connect to the server
+            const socket = io();
 
-		// Handle socket events
-		socket.on('connect', () => {
-			console.log('Connected to server');
-		});
+            // Handle socket events
+            socket.on('connect', () => {
+                console.log('Connected to server');
+            });
 
-		socket.on('disconnect', () => {
-			console.log('Disconnected from server');
-		});
+            socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+            });
 
-		// Send data to the server
-		socket.emit('message', 'Hello, server!');
+            // Send data to the server
+            socket.emit('message', 'Hello, server!');
 
-		// Receive data from the server
-		socket.on('packet', (data) => {
-			console.log('Received message from server:', data);
-			document.getElementById("info_content").innerText = data
-			if (Object.keys(data).length == 0){
-				document.getElementById("last_packet").innerHTML = "never"
-				return
-			}
-			let packet = JSON.parse(data)
-			document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString()
-			
-		});
+            // Receive data from the server
+            socket.on('packet', (data) => {
+                console.log('Received message from server:', data);
+                document.getElementById("info_content").innerText = data
+                if (Object.keys(data).length == 0){
+                    document.getElementById("last_packet").innerHTML = "never"
+                    return
+                }
+                let packet = JSON.parse(data)
+                document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString()
+                
+            });
 
-        var map = L.map('map').setView([51.505, -0.09], 13);
-
-        // Add a tile layer to add to our map, in this case it's a OpenStreetMap tile layer.
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-
-        // Define two geographical points
-        var drone_point = [51.505, -0.09];
-        var hangair_point = [51.51, -0.1];
+            var map = L.map('map').setView([51.505, -0.09], 13);
 
 
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
 
-        var droneIcon = L.icon({
+            // Define two geographical points
+            var drone_point = [51.505, -0.09];
+            var hangair_point = [51.51, -0.1];
+
+            var droneIcon = L.icon({
             iconUrl: 'drone.png',
-            iconSize:     [64, 64], // size of the icon
-            iconAnchor:   [32, 32], // point of the icon which will correspond to marker's location
-            popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
-        });
-        var homeIcon = L.icon({
+            iconSize: [64, 64], // size of the icon
+            iconAnchor: [32, 32], // point of the icon which will correspond to marker's location
+            popupAnchor: [0, -32] // point from which the popup should open relative to the iconAnchor
+            });
+
+            var homeIcon = L.icon({
             iconUrl: 'home.png',
-            iconSize:     [64, 64], // size of the icon
-            iconAnchor:   [32, 32], // point of the icon which will correspond to marker's location
-            popupAnchor:  [0, -32] // point from which the popup should open relative to the iconAnchor
-        });
-        // Add markers to the map at the defined points
-        var droneMarker = L.marker(drone_point, {icon: homeIcon}).addTo(map)
-            .bindPopup("Hangár")
+            iconSize: [64, 64], // size of the icon
+            iconAnchor: [32, 32], // point of the icon which will correspond to marker's location
+            popupAnchor: [0, -32] // point from which the popup should open relative to the iconAnchor
+            });
 
-        L.marker(hangair_point,{icon: droneIcon, draggable: true}).addTo(map)
-            .bindPopup('Dron')
+            // Add markers to the map at the defined points
+            L.marker(drone_point, {icon: homeIcon}).addTo(map).bindPopup("Hangár");
 
-        // Draw a line between the two points
-        var polyline = L.polyline([drone_point, hangair_point], {color: 'red'}).addTo(map);
-        var distance = L.GeometryUtil.distance(map, L.latLng(drone_point), L.latLng(hangair_point))
-        var centerLatLng = [(drone_point[0] + hangair_point[0]) / 2, (drone_point[1] + hangair_point[1]) / 2]; // Midpoint
-        var distanceLabel = L.divIcon({
-            className: 'distance-label',
-            html: distance.toFixed(2) + ' meters',
-            iconSize: [100, 40],
-            iconAnchor: [50, 20]
-        });
+            var droneMarker = L.marker(hangair_point, {icon: droneIcon, draggable: true}).addTo(map).bindPopup('Dron');
 
-        L.marker(centerLatLng, { icon: distanceLabel }).addTo(map);
-        
-        
+            // Draw a line between the two points
+            var polyline = L.polyline([drone_point, hangair_point], {color: 'red'}).addTo(map);
 
-        // Zoom the map to the polyline
-        map.fitBounds(polyline.getBounds());
-        
-        function updatePolyline() {
-            var newPointB = droneMarker.getLatLng();
-            polyline.setLatLngs([drone_point, newPointB]);
-            var newDistance = L.GeometryUtil.distance(map, L.latLng(drone_point), newPointB);
-            distanceLabel.options.html = newDistance.toFixed(2) + ' meters';
-            distanceMarker.setIcon(distanceLabel);
-            distanceMarker.setLatLng([(drone_point[0] + newPointB.lat) / 2, (drone_point[1] + newPointB.lng) / 2]);
-        }
-        droneMarker.on('moveend', function(e) {
-            console.log("fired")
+            // Calculate the initial distance between drone_point and hangair_point in meters
+            var distance = L.GeometryUtil.distance(map, L.latLng(drone_point), L.latLng(hangair_point));
+            var centerLatLng = [(drone_point[0] + hangair_point[0]) / 2, (drone_point[1] + hangair_point[1]) / 2]; // Midpoint
+
+            var distanceLabel = L.divIcon({
+                className: 'distance-label',
+                html: distance.toFixed(2) + ' meters',
+                iconSize: [100, 40],
+                iconAnchor: [50, 20]
+            });
+
+            var distanceMarker = L.marker(centerLatLng, { icon: distanceLabel }).addTo(map);
+
+            // Function to update the polyline and distance label
+            function updatePolyline() {
+                var newPointB = droneMarker.getLatLng();
+                polyline.setLatLngs([drone_point, newPointB]);
+                var newDistance = L.GeometryUtil.distance(map, L.latLng(drone_point), newPointB);
+                distanceLabel.options.html = newDistance.toFixed(2) + ' meters';
+                distanceMarker.setIcon(distanceLabel);
+                distanceMarker.setLatLng([(drone_point[0] + newPointB.lat) / 2, (drone_point[1] + newPointB.lng) / 2]);
+            }
+
+            // Listen for the moveend event on the draggable marker
+            droneMarker.on('move', function(e) {
             updatePolyline();
-        });
+            });
 
-	</script>
-</body>
+            // Zoom the map to the polyline
+            map.fitBounds(polyline.getBounds());
+
+	    </script>
+    </body>
 </html>
