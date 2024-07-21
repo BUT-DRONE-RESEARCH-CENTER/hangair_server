@@ -95,7 +95,7 @@
 				Podľa dohody sem pôjde ovládanie hangáru (teplota, úlohy pre drona,...)
 				<section id="media">
 					<h2>Videá</h2>
-					<p>Buď už "zmiešané" video zo všetkých kamier (ak >1) alebo viac playerov</p>
+					<img id="video" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/>
 				</section>
 				<section id="mapa">
 					<h2>Mapa</h2>
@@ -142,6 +142,10 @@
 				let packet = JSON.parse(data)
 				document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString()
 				
+			});
+			socket.on('video', (data) => {
+				const videoElement = document.getElementById('video');
+				videoElement.src = 'data:image/jpeg;base64,' + data;
 			});
 
 			var map = L.map('map').setView([51.505, -0.09], 13);
@@ -202,7 +206,7 @@
 
 			// Listen for the moveend event on the draggable marker
 			droneMarker.on('move', function(e) {
-			updatePolyline();
+				updatePolyline();
 			});
 
 			// Zoom the map to the polyline
