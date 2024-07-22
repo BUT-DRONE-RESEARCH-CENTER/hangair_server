@@ -76,11 +76,20 @@
 				border-bottom: 1px solid #ddd;
 				padding-bottom: 10px;
 			}
+			table {
+				width: 50%;
+				border-collapse: collapse;
+			}
+			th, td {
+				border: 1px solid black;
+				padding: 8px;
+				text-align: left;
+			}
 		</style>
 	</head>
 	<body>
 		<div class="top-bar">
-			<p>Last packet recieved at <span id="last_packet">unknown</span></p>
+			<p>Last packet recieved at <span id="last_packet">unknown</span>.<br>Hangair ip address <span id="hangair_ip">unknown</span>.</p>
 		</div>
 		<div class="container">
 			<div class="left-menu">
@@ -104,13 +113,111 @@
 					<a href="https://www.flaticon.com/free-icons/home-button" title="home button icons">Home button icons created by Freepik - Flaticon</a>
 				</section>
 				<section id="info">
-					<h2>Info</h2>
-					<p>Zatiaľ len packety, neskôr pekná tabuľka</p>
+					<h2>Informácie</h2>
+					<table>
+						<tr>
+							<th colspan="3" style="text-align: center;">Informácie z hangáru</th>
+						</tr>
+						<!-- TEPLOTA -->
+						<tr>
+							<td>Teplota <button onclick="toggleRows(this, ['temp_ext_drone_row', 'temp_int_hangair_row']);">+2</button></td>
+							<td>Exteriér (hangár)</td>
+							<td id="temp_ext_hangair">unknown</td>
+						</tr>
+						<tr id="temp_ext_drone_row" style="display: none;">
+							<td></td>
+							<td>Exteriér (dron)</td>
+							<td id="temp_ext_drone">unknown</td>
+						</tr>
+						<tr id="temp_int_hangair_row" style="display: none;">
+							<td></td>
+							<td id="temp_int_hangair">Interiér (hangár)</td>
+							<td>unknown</td>
+						</tr>
+						<!-- Vlhkosť -->
+						<tr>
+							<td>Vlhkosť <button onclick="toggleRows(this, ['humid_int_hangair_row']);">+1</button></td>
+							<td>Exteriér (hangár)</td>
+							<td id="humid_ext_hangair">unknown</td>
+						</tr>
+						<tr id="humid_int_hangair_row" style="display: none;">
+							<td></td>
+							<td>Exteriér (dron)</td>
+							<td id="humid_int_hangair">unknown</td>
+						</tr>
+						<!-- Baterka -->
+						<tr>
+							<td>Napájanie <button onclick="toggleRows(this, ['charging_row', 'charging_type_row', 'volts_row']);">+3</button></td>
+							<td>Stav batérie</td>
+							<td id="battery_status">unknown</td>
+						</tr>
+						<tr id="charging_row" style="display: none;">
+							<td></td>
+							<td>Nabíjanie</td>
+							<td id="charging">unknown</td>
+						</tr>
+						<tr id="charging_type_row" style="display: none;">
+							<td></td>
+							<td>Druh napájania</td>
+							<td id="charging_type">unknown</td>
+						</tr>
+						<tr id="volts_row" style="display: none;">
+							<td></td>
+							<td>Napätie</td>
+							<td id="volts">unknown</td>
+						</tr>
+						<!-- Status drona -->
+						<tr>
+							<td>Stav drona</td>
+							<td></td>
+							<td id="drone_status">unknown</td>
+						</tr>
+						<!-- Status dverí -->
+						<tr>
+							<td>Stav dverí</td>
+							<td></td>
+							<td id="door_status">unknown</td>
+						</tr>
+						<!-- Status hangáru -->
+						<tr>
+							<td>Stav hangáru</td>
+							<td></td>
+							<td id="door_status">unknown</td>
+						</tr>
+					</table>
 					<div id="info_content"></div>
 				</section>
 				<section id="nastavenia">
-					<h2>Nastavenia</h2>
-					<p>Voláke misc nastavenia, napr. dĺžka mapy...</p>
+					<h2>Príkazy/ Nastavenia</h2>
+					<!-- Teplota -->
+					<table>
+						<tr>
+							<th colspan="2">Cieľová teplota interiéru</th>
+							<th style="text-align: right;"><button>Odoslať</button></th>
+						</tr>
+						<tr>
+							<td colspan="2" style="text-align: right;">Teplota [°C]</td>
+							<td><input type="number" value="25" id="target_temp"></td>
+						</tr>
+						<tr>
+							<td colspan="2" style="text-align: right;">Časový limit [min]</td>
+							<td><input type="number" step="1" value="60" id="target_temp_expire"> Po uplynutí, automatické korigovanie. Ak 0, tak natrvalo.</td>
+						</tr>
+					</table>
+					<!-- Dvere -->
+					<br>
+					<table>
+						<tr>
+							<th>Dvere dronu</th>
+							<th>
+								<select id="door_control">
+									<option value="open">Otvoriť</option>
+									<option value="close">Zatvoriť</option>
+								</select>
+							</th>
+							<th style="text-align: right;"><button>Odoslať</button></th>
+						</tr>
+					</table>
 				</section>
 			</div>
 		</div>
@@ -212,6 +319,15 @@
 			// Zoom the map to the polyline
 			map.fitBounds(polyline.getBounds());
 
+		</script>
+
+		<script>
+			function toggleRows(button, rows) {
+				for (let i = 0; i < rows.length; i++){
+					document.getElementById(rows[i]).style.display = (document.getElementById(rows[i]).style.display === "none")?"":"none";
+				}
+				button.innerText = `${(document.getElementById(rows[0]).style.display==="none")?"+":"-"}${rows.length}`;
+			}
 		</script>
 	</body>
 </html>
