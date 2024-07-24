@@ -1,333 +1,356 @@
 <!DOCTYPE html>
-	<html>
-	<head>
-		<title>DrOn</title>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-		<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-		<script src="https://unpkg.com/leaflet-geometryutil"></script>
-		<style>
-			body {
-				margin: 0;
-				font-family: Arial, sans-serif;
-			}
-			.top-bar {
-				background-color: #4CAF50;
-				color: white;
-				text-align: center;
-				padding: 10px 0;
-				position: fixed;
-				width: 100%;
-				top: 0;
-				left: 0;
-				z-index: 1000;
-			}
-			#map {
-				height: 400px;
-			}
-			.distance-label {
-				background-color: white;
-				border: 1px solid black;
-				padding: 5px;
-				border-radius: 5px;
-				text-align: center;
-				font-size: 14px;
-			}
-			.container {
-				display: flex;
-				margin-top: 50px;
-			}
-			.left-menu {
-				width: 200px;
-				background-color: #f8f8f8;
-				border-right: 1px solid #ddd;
-				padding-top: 20px;
-				position: fixed;
-				top: 50px;
-				bottom: 0;
-				overflow-y: auto;
-			}
-			.left-menu ul {
-				list-style-type: none;
-				padding: 0;
-			}
-			.left-menu ul li {
-				padding: 10px;
-				text-align: center;
-			}
-			.left-menu ul li a {
-				text-decoration: none;
-				color: #333;
-				display: block;
-			}
-			.left-menu ul li a:hover {
-				background-color: #ddd;
-			}
-			.content {
-				margin-left: 200px;
-				padding: 20px;
-				flex-grow: 1;
-			}
-			section {
-				margin-bottom: 20px;
-			}
-			h2 {
-				border-bottom: 1px solid #ddd;
-				padding-bottom: 10px;
-			}
-			table {
-				width: 50%;
-				border-collapse: collapse;
-			}
-			th, td {
-				border: 1px solid black;
-				padding: 8px;
-				text-align: left;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="top-bar">
-			<p>Last packet recieved at <span id="last_packet">unknown</span>.<br>Hangair ip address <span id="hangair_ip">unknown</span>.</p>
+<html>
+<head>
+	<title>DrOn</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/leaflet-geometryutil"></script>
+	<style>
+		body {
+			margin: 0;
+			font-family: Arial, sans-serif;
+		}
+		.top-bar {
+			background-color: #4CAF50;
+			color: white;
+			text-align: center;
+			padding: 10px 0;
+			position: fixed;
+			width: 100%;
+			top: 0;
+			left: 0;
+			z-index: 1000;
+		}
+		#map {
+			height: 400px;
+		}
+		.distance-label {
+			background-color: white;
+			border: 1px solid black;
+			padding: 5px;
+			border-radius: 5px;
+			text-align: center;
+			font-size: 14px;
+		}
+		.container {
+			display: flex;
+			margin-top: 50px;
+		}
+		.left-menu {
+			width: 220px;
+			background-color: #f0f0f0;
+			border-right: 2px solid #bbb;
+			padding-top: 20px;
+			position: fixed;
+			top: 50px;
+			bottom: 0;
+			overflow-y: auto;
+		}
+		.left-menu ul {
+			list-style-type: none;
+			padding: 0;
+		}
+		.left-menu ul li {
+			padding: 15px 10px;
+			text-align: center;
+			border-bottom: 1px solid #ddd;
+		}
+		.left-menu ul li a {
+			text-decoration: none;
+			color: #333;
+			display: block;
+			font-weight: bold;
+		}
+		.left-menu ul li a:hover {
+			background-color: #ddd;
+			color: #4CAF50;
+		}
+		.content {
+			margin-left: 220px;
+			padding: 20px;
+			flex-grow: 1;
+		}
+		section {
+			margin-bottom: 20px;
+		}
+		h2 {
+			border-bottom: 1px solid #ddd;
+			padding-bottom: 10px;
+		}
+		table {
+			width: 50%;
+			border-collapse: collapse;
+			margin: 20px auto;
+			border-collapse: separate;
+			border-spacing: 0;
+			box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+		}
+		th, td {
+			padding: 12px;
+			text-align: left;
+			border: 1px solid #ddd;
+		}
+		thead {
+			background-color: #4CAF50;
+			color: white;
+		}
+		tr:hover {
+			background-color: #f1f1f1;
+		}
+		tbody tr:nth-child(even) {
+			background-color: #f9f9f9;
+		}
+		tbody tr:nth-child(odd) {
+			background-color: #ffffff;
+		}
+		th {
+			background-color: #4CAF50;
+			color: white;
+		}
+	</style>
+</head>
+<body>
+	<div class="top-bar">
+		<p>Last packet received at <span id="last_packet">unknown</span>.<br>Hangar IP address <span id="hangar_ip">unknown</span>.</p>
+	</div>
+	<div class="container">
+		<div class="left-menu">
+			<ul>
+				<li><a href="#media">Videos</a></li>
+				<li><a href="#mapa">Map</a></li>
+				<li><a href="#info">Info</a></li>
+				<li><a href="#nastavenia">Settings</a></li>
+			</ul>
 		</div>
-		<div class="container">
-			<div class="left-menu">
-				<ul>
-					<li><a href="#media">Videá</a></li>
-					<li><a href="#mapa">Mapa</a></li>
-					<li><a href="#info">Info</a></li>
-					<li><a href="#nastavenia">Nastavenia</a></li>
-				</ul>
-			</div>
-			<div class="content">
-				Podľa dohody sem pôjde ovládanie hangáru (teplota, úlohy pre drona,...)
-				<section id="media">
-					<h2>Videá</h2>
-					<img id="video" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/>
-				</section>
-				<section id="mapa">
-					<h2>Mapa</h2>
-					<div id="map"></div>
-					<a href="https://www.flaticon.com/free-icons/drone-case" title="drone case icons">Drone case icons created by Freepik - Flaticon</a>
-					<a href="https://www.flaticon.com/free-icons/home-button" title="home button icons">Home button icons created by Freepik - Flaticon</a>
-				</section>
-				<section id="info">
-					<h2>Informácie</h2>
-					<table>
-						<tr>
-							<th colspan="3" style="text-align: center;">Informácie z hangáru</th>
-						</tr>
-						<!-- TEPLOTA -->
-						<tr>
-							<td>Teplota <button onclick="toggleRows(this, ['temp_ext_drone_row', 'temp_int_hangair_row']);">+2</button></td>
-							<td>Exteriér (hangár)</td>
-							<td id="temp_ext_hangair">unknown</td>
-						</tr>
-						<tr id="temp_ext_drone_row" style="display: none;">
-							<td></td>
-							<td>Exteriér (dron)</td>
-							<td id="temp_ext_drone">unknown</td>
-						</tr>
-						<tr id="temp_int_hangair_row" style="display: none;">
-							<td></td>
-							<td id="temp_int_hangair">Interiér (hangár)</td>
-							<td>unknown</td>
-						</tr>
-						<!-- Vlhkosť -->
-						<tr>
-							<td>Vlhkosť <button onclick="toggleRows(this, ['humid_int_hangair_row']);">+1</button></td>
-							<td>Exteriér (hangár)</td>
-							<td id="humid_ext_hangair">unknown</td>
-						</tr>
-						<tr id="humid_int_hangair_row" style="display: none;">
-							<td></td>
-							<td>Exteriér (dron)</td>
-							<td id="humid_int_hangair">unknown</td>
-						</tr>
-						<!-- Baterka -->
-						<tr>
-							<td>Napájanie <button onclick="toggleRows(this, ['charging_row', 'charging_type_row', 'volts_row']);">+3</button></td>
-							<td>Stav batérie</td>
-							<td id="battery_status">unknown</td>
-						</tr>
-						<tr id="charging_row" style="display: none;">
-							<td></td>
-							<td>Nabíjanie</td>
-							<td id="charging">unknown</td>
-						</tr>
-						<tr id="charging_type_row" style="display: none;">
-							<td></td>
-							<td>Druh napájania</td>
-							<td id="charging_type">unknown</td>
-						</tr>
-						<tr id="volts_row" style="display: none;">
-							<td></td>
-							<td>Napätie</td>
-							<td id="volts">unknown</td>
-						</tr>
-						<!-- Status drona -->
-						<tr>
-							<td>Stav drona</td>
-							<td></td>
-							<td id="drone_status">unknown</td>
-						</tr>
-						<!-- Status dverí -->
-						<tr>
-							<td>Stav dverí</td>
-							<td></td>
-							<td id="door_status">unknown</td>
-						</tr>
-						<!-- Status hangáru -->
-						<tr>
-							<td>Stav hangáru</td>
-							<td></td>
-							<td id="door_status">unknown</td>
-						</tr>
-					</table>
-					<div id="info_content"></div>
-				</section>
-				<section id="nastavenia">
-					<h2>Príkazy/ Nastavenia</h2>
-					<!-- Teplota -->
-					<table>
-						<tr>
-							<th colspan="2">Cieľová teplota interiéru</th>
-							<th style="text-align: right;"><button>Odoslať</button></th>
-						</tr>
-						<tr>
-							<td colspan="2" style="text-align: right;">Teplota [°C]</td>
-							<td><input type="number" value="25" id="target_temp"></td>
-						</tr>
-						<tr>
-							<td colspan="2" style="text-align: right;">Časový limit [min]</td>
-							<td><input type="number" step="1" value="60" id="target_temp_expire"> Po uplynutí, automatické korigovanie. Ak 0, tak natrvalo.</td>
-						</tr>
-					</table>
-					<!-- Dvere -->
-					<br>
-					<table>
-						<tr>
-							<th>Dvere dronu</th>
-							<th>
-								<select id="door_control">
-									<option value="open">Otvoriť</option>
-									<option value="close">Zatvoriť</option>
-								</select>
-							</th>
-							<th style="text-align: right;"><button>Odoslať</button></th>
-						</tr>
-					</table>
-				</section>
-			</div>
+		<div class="content">
+			According to the agreement, this section will contain hangar control (temperature, drone tasks, etc.)
+			<section id="media">
+				<h2>Videos</h2>
+				<img id="video" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/>
+			</section>
+			<section id="mapa">
+				<h2>Map</h2>
+				<div id="map"></div>
+				<a href="https://www.flaticon.com/free-icons/drone-case" title="drone case icons">Drone case icons created by Freepik - Flaticon</a>
+				<a href="https://www.flaticon.com/free-icons/home-button" title="home button icons">Home button icons created by Freepik - Flaticon</a>
+			</section>
+			<section id="info">
+				<h2>Information</h2>
+				<table>
+					<tr>
+						<th colspan="3" style="text-align: center;">Hangar Information</th>
+					</tr>
+					<!-- Temperature -->
+					<tr>
+						<td>Temperature <button onclick="toggleRows(this, ['temp_ext_drone_row', 'temp_int_hangar_row']);">+2</button></td>
+						<td>Exterior (hangar)</td>
+						<td id="temp_ext_hangar">unknown</td>
+					</tr>
+					<tr id="temp_ext_drone_row" style="display: none;">
+						<td></td>
+						<td>Exterior (drone)</td>
+						<td id="temp_ext_drone">unknown</td>
+					</tr>
+					<tr id="temp_int_hangar_row" style="display: none;">
+						<td></td>
+						<td>Interior (hangar)</td>
+						<td id="temp_int_hangar">unknown</td>
+					</tr>
+					<!-- Humidity -->
+					<tr>
+						<td>Humidity <button onclick="toggleRows(this, ['humid_int_hangar_row']);">+1</button></td>
+						<td>Exterior (hangar)</td>
+						<td id="humid_ext_hangar">unknown</td>
+					</tr>
+					<tr id="humid_int_hangar_row" style="display: none;">
+						<td></td>
+						<td>Interior (hangar)</td>
+						<td id="humid_int_hangar">unknown</td>
+					</tr>
+					<!-- Battery -->
+					<tr>
+						<td>Power <button onclick="toggleRows(this, ['charging_row', 'charging_type_row', 'volts_row']);">+3</button></td>
+						<td>Battery Status</td>
+						<td id="battery_status">unknown</td>
+					</tr>
+					<tr id="charging_row" style="display: none;">
+						<td></td>
+						<td>Charging</td>
+						<td id="charging">unknown</td>
+					</tr>
+					<tr id="charging_type_row" style="display: none;">
+						<td></td>
+						<td>Charging Type</td>
+						<td id="charging_type">unknown</td>
+					</tr>
+					<tr id="volts_row" style="display: none;">
+						<td></td>
+						<td>Voltage</td>
+						<td id="volts">unknown</td>
+					</tr>
+					<!-- Drone Status -->
+					<tr>
+						<td>Drone Status</td>
+						<td></td>
+						<td id="drone_status">unknown</td>
+					</tr>
+					<!-- Door Status -->
+					<tr>
+						<td>Door Status</td>
+						<td></td>
+						<td id="door_status">unknown</td>
+					</tr>
+					<!-- Hangar Status -->
+					<tr>
+						<td>Hangar Status</td>
+						<td></td>
+						<td id="hangar_status">unknown</td>
+					</tr>
+				</table>
+				<div id="info_content"></div>
+			</section>
+			<section id="nastavenia">
+				<h2>Commands/Settings</h2>
+				<!-- Temperature -->
+				<table>
+					<tr>
+						<th colspan="2">Target Interior Temperature</th>
+						<th style="text-align: right;"><button>Send</button></th>
+					</tr>
+					<tr>
+						<td colspan="2" style="text-align: right;">Temperature [°C]</td>
+						<td><input type="number" value="25" id="target_temp"></td>
+					</tr>
+					<tr>
+						<td colspan="2" style="text-align: right;">Time Limit [min]</td>
+						<td><input type="number" step="1" value="60" id="target_temp_expire"> After this time, automatic correction. If 0, then permanent.</td>
+					</tr>
+				</table>
+				<!-- Door -->
+				<br>
+				<table>
+					<tr>
+						<th>Drone Door</th>
+						<th>
+							<select id="door_control">
+								<option value="open">Open</option>
+								<option value="close">Close</option>
+							</select>
+						</th>
+						<th style="text-align: right;"><button>Send</button></th>
+					</tr>
+				</table>
+			</section>
 		</div>
+	</div>
 
-		<script>
-			// Connect to the server
-			const socket = io();
+	<script>
+		// Connect to the server
+		const socket = io();
 
-			// Handle socket events
-			socket.on('connect', () => {
-				console.log('Connected to server');
-			});
+		// Handle socket events
+		socket.on('connect', () => {
+			console.log('Connected to server');
+		});
 
-			socket.on('disconnect', () => {
-				console.log('Disconnected from server');
-			});
+		socket.on('disconnect', () => {
+			console.log('Disconnected from server');
+		});
 
-			// Send data to the server
-			socket.emit('message', 'Hello, server!');
+		// Send data to the server
+		socket.emit('message', 'Hello, server!');
 
-			// Receive data from the server
-			socket.on('packet', (data) => {
-				console.log('Received message from server:', data);
-				document.getElementById("info_content").innerText = data
-				if (Object.keys(data).length == 0){
-					document.getElementById("last_packet").innerHTML = "never"
-					return
-				}
-				let packet = JSON.parse(data)
-				document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString()
-				
-			});
-			socket.on('video', (data) => {
-				const videoElement = document.getElementById('video');
-				videoElement.src = 'data:image/jpeg;base64,' + data;
-			});
+		// Receive data from the server
+		socket.on('packet', (data) => {
+			console.log('Received message from server:', data);
+			document.getElementById("info_content").innerText = data;
+			if (Object.keys(data).length == 0) {
+				document.getElementById("last_packet").innerHTML = "never";
+				return;
+			}
+			let packet = JSON.parse(data);
+			document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString();
+		});
 
-			var map = L.map('map').setView([51.505, -0.09], 13);
+		socket.on('video', (data) => {
+			const videoElement = document.getElementById('video');
+			videoElement.src = 'data:image/jpeg;base64,' + data;
+		});
 
+		var map = L.map('map').setView([51.505, -0.09], 13);
 
-			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-			}).addTo(map);
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+		}).addTo(map);
 
-			// Define two geographical points
-			var drone_point = [51.505, -0.09];
-			var hangair_point = [51.51, -0.1];
+		// Define two geographical points
+		var drone_point = [51.505, -0.09];
+		var hangar_point = [51.51, -0.1];
 
-			var droneIcon = L.icon({
+		var droneIcon = L.icon({
 			iconUrl: 'drone.png',
 			iconSize: [64, 64], // size of the icon
 			iconAnchor: [32, 32], // point of the icon which will correspond to marker's location
 			popupAnchor: [0, -32] // point from which the popup should open relative to the iconAnchor
-			});
+		});
 
-			var homeIcon = L.icon({
+		var homeIcon = L.icon({
 			iconUrl: 'home.png',
 			iconSize: [64, 64], // size of the icon
 			iconAnchor: [32, 32], // point of the icon which will correspond to marker's location
 			popupAnchor: [0, -32] // point from which the popup should open relative to the iconAnchor
-			});
+		});
 
-			// Add markers to the map at the defined points
-			L.marker(drone_point, {icon: homeIcon}).addTo(map).bindPopup("Hangár");
+		// Add markers to the map at the defined points
+		L.marker(drone_point, {icon: homeIcon}).addTo(map).bindPopup("Hangar");
 
-			var droneMarker = L.marker(hangair_point, {icon: droneIcon, draggable: true}).addTo(map).bindPopup('Dron');
+		var droneMarker = L.marker(hangar_point, {icon: droneIcon, draggable: true}).addTo(map).bindPopup('Drone');
 
-			// Draw a line between the two points
-			var polyline = L.polyline([drone_point, hangair_point], {color: 'red'}).addTo(map);
+		// Draw a line between the two points
+		var polyline = L.polyline([drone_point, hangar_point], {color: 'red'}).addTo(map);
 
-			// Calculate the initial distance between drone_point and hangair_point in meters
-			var distance = L.GeometryUtil.distance(map, L.latLng(drone_point), L.latLng(hangair_point));
-			var centerLatLng = [(drone_point[0] + hangair_point[0]) / 2, (drone_point[1] + hangair_point[1]) / 2]; // Midpoint
+		// Calculate the initial distance between drone_point and hangar_point in meters
+		var distance = L.GeometryUtil.distance(map, L.latLng(drone_point), L.latLng(hangar_point));
+		var centerLatLng = [(drone_point[0] + hangar_point[0]) / 2, (drone_point[1] + hangar_point[1]) / 2]; // Midpoint
 
-			var distanceLabel = L.divIcon({
-				className: 'distance-label',
-				html: distance.toFixed(2) + ' meters',
-				iconSize: [100, 40],
-				iconAnchor: [50, 20]
-			});
+		var distanceLabel = L.divIcon({
+			className: 'distance-label',
+			html: distance.toFixed(2) + ' meters',
+			iconSize: [100, 40],
+			iconAnchor: [50, 20]
+		});
 
-			var distanceMarker = L.marker(centerLatLng, { icon: distanceLabel }).addTo(map);
+		var distanceMarker = L.marker(centerLatLng, { icon: distanceLabel }).addTo(map);
 
-			// Function to update the polyline and distance label
-			function updatePolyline() {
-				var newPointB = droneMarker.getLatLng();
-				polyline.setLatLngs([drone_point, newPointB]);
-				var newDistance = L.GeometryUtil.distance(map, L.latLng(drone_point), newPointB);
-				distanceLabel.options.html = newDistance.toFixed(2) + ' meters';
-				distanceMarker.setIcon(distanceLabel);
-				distanceMarker.setLatLng([(drone_point[0] + newPointB.lat) / 2, (drone_point[1] + newPointB.lng) / 2]);
+		// Function to update the polyline and distance label
+		function updatePolyline() {
+			var newPointB = droneMarker.getLatLng();
+			polyline.setLatLngs([drone_point, newPointB]);
+			var newDistance = L.GeometryUtil.distance(map, L.latLng(drone_point), newPointB);
+			distanceLabel.options.html = newDistance.toFixed(2) + ' meters';
+			distanceMarker.setIcon(distanceLabel);
+			distanceMarker.setLatLng([(drone_point[0] + newPointB.lat) / 2, (drone_point[1] + newPointB.lng) / 2]);
+		}
+
+		// Listen for the moveend event on the draggable marker
+		droneMarker.on('move', function(e) {
+			updatePolyline();
+		});
+
+		// Zoom the map to the polyline
+		map.fitBounds(polyline.getBounds());
+
+	</script>
+
+	<script>
+		function toggleRows(button, rows) {
+			for (let i = 0; i < rows.length; i++) {
+				document.getElementById(rows[i]).style.display = (document.getElementById(rows[i]).style.display === "none") ? "" : "none";
 			}
-
-			// Listen for the moveend event on the draggable marker
-			droneMarker.on('move', function(e) {
-				updatePolyline();
-			});
-
-			// Zoom the map to the polyline
-			map.fitBounds(polyline.getBounds());
-
-		</script>
-
-		<script>
-			function toggleRows(button, rows) {
-				for (let i = 0; i < rows.length; i++){
-					document.getElementById(rows[i]).style.display = (document.getElementById(rows[i]).style.display === "none")?"":"none";
-				}
-				button.innerText = `${(document.getElementById(rows[0]).style.display==="none")?"+":"-"}${rows.length}`;
-			}
-		</script>
-	</body>
+			button.innerText = `${(document.getElementById(rows[0]).style.display === "none") ? "+" : "-"}${rows.length}`;
+		}
+	</script>
+</body>
 </html>
