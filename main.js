@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get("/packet", (req, res) => {
+app.post("/packet", (req, res) => {
 	hangair_ip = req.query.ip;
 	// Handle incoming packets from hangair
 	let packet = JSON.parse(req.body);
