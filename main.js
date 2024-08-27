@@ -3,6 +3,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 const axios = require('axios');
+const { type } = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,20 +14,23 @@ var last_packet = {};
 var hangair_ip = ""
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get("/packet", (req, res) => {
-	hangair_ip = req.query.ip;
+app.post("/packet", (req, res) => {
+	hangair_ip = req.ip;
+	console.log("Hangair IP:", hangair_ip);
 	// Handle incoming packets from hangair
-	let packet = JSON.parse(req.body);
+	let packet = req.body;
 	packet["timestamp"] = + new Date();
-	if (packet["type"] == "position") {
-		pos_history.push(packet["data"]);
-	}
-	io.emit("packet", JSON.stringify(packet));
+	packet["ip"] = hangair_ip;
+	
+	pos_history.push({"Latitude": packet["Latitude"], "Longitude": packet["Longitude"], "timestamp": packet["timestamp"]});
+	
+	io.emit("packet", packet);
 	last_packet = packet;
 	res.send("ok");
 });
@@ -40,6 +44,27 @@ io.on('connection', (socket) => {
 	// Socket.io disconnection event
 	socket.on('disconnect', () => {
 		console.log('A client disconnected');
+	});
+
+	socket.on("command", (command) => {
+		console.log("Command received:", command, typeof command);
+		if (!["temperature", "door"].includes(command["command"])) {
+			console.log("Invalid command");
+			socket.emit("error", "Invalid command");
+			return;
+		}
+		if (hangair_ip == "") {
+			console.log("Hangair IP not known");
+			socket.emit("error", "Hangair IP not known");
+			return;
+		}
+		axios.post(`${hangair_ip}/${command["command"]}`, command).then((response) => {
+			console.log("Command sent");
+			socket.emit("error", `Command sent: ${command["command"]}`);
+		}).catch((error) => {
+			console.error("Error sending command:", error);
+			socket.emit("error", `Error sending command (${error.code})`);
+		});
 	});
 });
 

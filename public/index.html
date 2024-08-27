@@ -69,7 +69,7 @@
 		}
 		.content {
 			margin-left: 220px;
-			padding: 20px;
+			padding: 40px;
 			flex-grow: 1;
 		}
 		section {
@@ -109,6 +109,44 @@
 			background-color: #4CAF50;
 			color: white;
 		}
+
+
+
+		
+		#animated-text-strip{
+			display: flex;
+			flex-flow: row nowrap;
+			align-items: center;
+			overflow: hidden;
+		}
+		#animated-text-strip .marquee {
+			white-space: nowrap;
+			animation: marquee 5s linear infinite;
+			max-width: none;
+		}
+
+		@keyframes marquee {
+			0% {
+				transform: translate(0, 0);
+			}
+			100% {
+				transform: translate(-100%, 0);
+			}
+		}
+		#animated-text-strip{
+			background:yellow;
+			padding: 1rem 0;
+		}
+		.marquee{
+			font-family: 'Open Sans', sans-serif;
+			font-size: 2rem;
+			font-weight: 900;
+			text-transform: uppercase;
+			color: red;
+		}
+		.anim-container{
+			position: relative
+		}
 	</style>
 </head>
 <body>
@@ -125,7 +163,6 @@
 			</ul>
 		</div>
 		<div class="content">
-			According to the agreement, this section will contain hangar control (temperature, drone tasks, etc.)
 			<section id="media">
 				<h2>Videos</h2>
 				<img id="video" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/>
@@ -138,6 +175,39 @@
 			</section>
 			<section id="info">
 				<h2>Information</h2>
+				<table>
+					<tr>
+						<th colspan="2" style="text-align: center;">Drone Positional Information</th>
+					</tr>
+					<tr>
+						<td>GPS status</td>
+						<td id="drone_gps_status">unknown</td>
+					</tr>
+					<tr>
+						<td>Lat</td>
+						<td id="drone_x">unknown</td>
+					</tr>
+					<tr>
+						<td>Long</td>
+						<td id="drone_y">unknown</td>
+					</tr>
+					<tr>
+						<td>Altitude</td>
+						<td id="drone_altitude">unknown</td>
+					</tr>
+					<tr>
+						<td>Altitude - relative</td>
+						<td id="drone_altitude_rel">unknown</td>
+					</tr>
+					<tr>
+						<td>Speed</td>
+						<td id="drone_speed">unknown</td>
+					</tr>
+					<tr>
+						<td>Flight time</td>
+						<td id="drone_flight_time">unknown</td>
+					</tr>
+				</table>
 				<table>
 					<tr>
 						<th colspan="3" style="text-align: center;">Hangar Information</th>
@@ -171,7 +241,7 @@
 					</tr>
 					<!-- Battery -->
 					<tr>
-						<td>Power <button onclick="toggleRows(this, ['charging_row', 'charging_type_row', 'volts_row']);">+3</button></td>
+						<td>Power <button onclick="toggleRows(this, ['charging_row', 'charging_type_row', 'volts_row', 'current_row']);">+4</button></td>
 						<td>Battery Status</td>
 						<td id="battery_status">unknown</td>
 					</tr>
@@ -189,6 +259,11 @@
 						<td></td>
 						<td>Voltage</td>
 						<td id="volts">unknown</td>
+					</tr>
+					<tr id="current_row" style="display: none;">
+						<td></td>
+						<td>Voltage</td>
+						<td id="current">unknown</td>
 					</tr>
 					<!-- Drone Status -->
 					<tr>
@@ -217,7 +292,7 @@
 				<table>
 					<tr>
 						<th colspan="2">Target Interior Temperature</th>
-						<th style="text-align: right;"><button>Send</button></th>
+						<th style="text-align: right;"><button id="send_temp">Send</button></th>
 					</tr>
 					<tr>
 						<td colspan="2" style="text-align: right;">Temperature [°C]</td>
@@ -239,7 +314,7 @@
 								<option value="close">Close</option>
 							</select>
 						</th>
-						<th style="text-align: right;"><button>Send</button></th>
+						<th style="text-align: right;"><button id="send_door">Send</button></th>
 					</tr>
 				</table>
 			</section>
@@ -247,6 +322,21 @@
 	</div>
 
 	<script>
+		// This translates the keys of the original packet to the keys used in the HTML
+		var keyMap = {
+			"Fix": "gps_fix",
+			"Sats": "satelites",
+			"Voltage": "volts",
+			"Remaining": "battery_status",
+			"Latitude": "drone_x",
+			"Longitude": "drone_y",
+			"Altitude": "drone_altitude",
+			"AltitudeAG": "drone_altitude_rel",
+			"Speed": "drone_speed",
+			"FlightTime": "drone_flight_time",
+			"Fix": "drone_gps_status",
+			"Current": "current"
+		}
 		// Connect to the server
 		const socket = io();
 
@@ -264,14 +354,51 @@
 
 		// Receive data from the server
 		socket.on('packet', (data) => {
+			if (typeof data == "string"){
+				data = JSON.parse(data)
+			}
 			console.log('Received message from server:', data);
 			document.getElementById("info_content").innerText = data;
 			if (Object.keys(data).length == 0) {
 				document.getElementById("last_packet").innerHTML = "never";
 				return;
 			}
-			let packet = JSON.parse(data);
-			document.getElementById("last_packet").innerHTML = new Date(data.timestamp * 1000).toLocaleDateString();
+
+			let packet = data;
+
+			// Update headers
+			let time = new Date(packet["timestamp"])
+			let hours = String(time.getHours()).padStart(2, '0');
+			let minutes = String(time.getMinutes()).padStart(2, '0');
+			let seconds = String(time.getSeconds()).padStart(2, '0');
+			let day = String(time.getDate()).padStart(2, '0');
+			let month = String(time.getMonth() + 1).padStart(2, '0');
+			let year = time.getFullYear();
+			let fmt = `${hours}:${minutes}:${seconds} ${day}.${month}.${year}`;
+			document.getElementById("last_packet").innerText = fmt;
+
+			document.getElementById("hangar_ip").innerText = packet["ip"]
+
+			// Update map
+			// TODO: Fix distance calculator
+			droneMarker.setLatLng([packet["Latitude"], packet["Longitude"]])
+			updatePolyline()
+			map.fitBounds(polyline.getBounds());
+
+			// Map all incoming keys to their respective display elements
+			console.log(packet, Object.keys(packet))
+			Object.keys(packet).forEach(key => {
+				let mapped = ""
+				mapped = keyMap[key]
+				if (key == "timestamp" || key == "ip"){
+					return;
+				}
+				if (mapped === undefined){
+					console.error(`Unknown key recieved from server: "${key}"`)
+					return;
+				}
+				document.getElementById(mapped).innerText = packet[key]
+			})
 		});
 
 		socket.on('video', (data) => {
@@ -342,6 +469,64 @@
 		// Zoom the map to the polyline
 		map.fitBounds(polyline.getBounds());
 
+		function sendCommand(evt){
+			let payload
+			if (evt.target.id == "send_temp"){
+				payload = {
+					"command": "temperature",
+					"target_temp": document.getElementById("target_temp").value,
+					"target_temp_expire": document.getElementById("target_temp_expire").value
+				};
+			} else {
+				// TODO: Update door status based on hangair reports
+				payload = {
+					"command": "door",
+					"door_control": document.getElementById("door_control").value
+				};
+			}
+			console.log("Sending command with payload: ", payload);
+			socket.emit("command", payload);
+		}
+		document.getElementById("send_temp").addEventListener("click", e => sendCommand(e))
+		document.getElementById("send_door").addEventListener("click", e => sendCommand(e))
+
+		socket.on('error', (text) => {
+			console.error(`Server reported error: ${text}`)
+			displayErr(text)
+		})
+
+
+		function displayErr(txt){
+			deleteErr()
+			document.getElementsByClassName("top-bar")[0].innerHTML = `
+				<div id="anim-container">
+					<div id="animated-text-strip">
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+						<span class="marquee">----rpl----&nbsp;</span>
+					</div>
+				</div>`.replaceAll("rpl", txt) + document.getElementsByClassName("top-bar")[0].innerHTML
+			document.getElementsByClassName("content")[0].style.padding = "120px"
+			document.getElementsByClassName("left-menu")[0].style.paddingTop = "100px"
+			setTimeout(deleteErr, 7000)
+		}
+		function deleteErr(){
+			if (document.getElementById("anim-container") !== null){
+				document.getElementById("anim-container").remove()
+			}
+			document.getElementsByClassName("content")[0].style.padding = "40px"
+			document.getElementsByClassName("left-menu")[0].style.paddingTop = "20px"
+		}
 	</script>
 
 	<script>
