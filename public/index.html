@@ -165,7 +165,17 @@
 		<div class="content">
 			<section id="media">
 				<h2>Videos</h2>
-				<img id="video" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/>
+				<table>
+					<tr>
+						<th>Drone</th>
+						<th colspan="2" style="text-align: center;">Hangair</th>
+					</tr>
+					<tr>
+						<td><img id="drone_video" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/></td>
+						<td><img id="hangair_video_1" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/></td>
+						<td><img id="hangair_video_2" width="640" height="480" src="placeholder.png" onerror="this.src='placeholder.png'"/></td>
+					</tr>
+				</table>
 			</section>
 			<section id="mapa">
 				<h2>Map</h2>
@@ -401,8 +411,16 @@
 			})
 		});
 
-		socket.on('video', (data) => {
-			const videoElement = document.getElementById('video');
+		socket.on('drone_video', (data) => {
+			const videoElement = document.getElementById('drone_video');
+			videoElement.src = 'data:image/jpeg;base64,' + data;
+		});
+		socket.on('hangair_video_1', (data) => {
+			const videoElement = document.getElementById('hangair_video_1');
+			videoElement.src = 'data:image/jpeg;base64,' + data;
+		});
+		socket.on('hangair_video_2', (data) => {
+			const videoElement = document.getElementById('hangair_video_2');
 			videoElement.src = 'data:image/jpeg;base64,' + data;
 		});
 
