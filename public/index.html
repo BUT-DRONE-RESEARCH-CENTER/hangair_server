@@ -332,6 +332,8 @@
 	</div>
 
 	<script>
+		document.getElementsByClassName("content")[0].style.padding = "40px"
+		document.getElementsByClassName("left-menu")[0].style.paddingTop = "20px"
 		// This translates the keys of the original packet to the keys used in the HTML
 		var keyMap = {
 			"Fix": "gps_fix",
@@ -515,9 +517,8 @@
 
 
 		function displayErr(txt){
-			deleteErr()
 			document.getElementsByClassName("top-bar")[0].innerHTML = `
-				<div id="anim-container">
+				<div id="anim-container" data-findme="rpl">
 					<div id="animated-text-strip">
 						<span class="marquee">----rpl----&nbsp;</span>
 						<span class="marquee">----rpl----&nbsp;</span>
@@ -534,16 +535,19 @@
 						<span class="marquee">----rpl----&nbsp;</span>
 					</div>
 				</div>`.replaceAll("rpl", txt) + document.getElementsByClassName("top-bar")[0].innerHTML
-			document.getElementsByClassName("content")[0].style.padding = "120px"
-			document.getElementsByClassName("left-menu")[0].style.paddingTop = "100px"
-			setTimeout(deleteErr, 7000)
+			document.getElementsByClassName("content")[0].style.padding = `${parseInt(document.getElementsByClassName("content")[0].style.padding.replaceAll("px", "")) + 80}px`
+			document.getElementsByClassName("left-menu")[0].style.paddingTop = `${parseInt(document.getElementsByClassName("left-menu")[0].style.paddingTop.replaceAll("px", "")) + 80}px`
+			setTimeout(deleteErr.bind(null, txt), 7000)
 		}
-		function deleteErr(){
-			if (document.getElementById("anim-container") !== null){
-				document.getElementById("anim-container").remove()
-			}
-			document.getElementsByClassName("content")[0].style.padding = "40px"
-			document.getElementsByClassName("left-menu")[0].style.paddingTop = "20px"
+		function deleteErr(txt){
+			Array.prototype.slice.call(document.querySelectorAll("#anim-container")).forEach(el => {
+				console.log("here", el.dataset, txt)
+				if (el.dataset.findme == txt){
+					el.remove()
+					document.getElementsByClassName("content")[0].style.padding = `${parseInt(document.getElementsByClassName("content")[0].style.padding.replaceAll("px", "")) - 80}px`
+					document.getElementsByClassName("left-menu")[0].style.paddingTop = `${parseInt(document.getElementsByClassName("left-menu")[0].style.paddingTop.replaceAll("px", "")) - 80}px`
+				}
+			})
 		}
 	</script>
 
