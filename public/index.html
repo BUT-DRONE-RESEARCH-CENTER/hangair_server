@@ -160,6 +160,7 @@
 				<li><a href="#mapa">Map</a></li>
 				<li><a href="#info">Info</a></li>
 				<li><a href="#nastavenia">Settings</a></li>
+				<li><a href="#svar_edit">Hangair variable editor</a></li>
 			</ul>
 		</div>
 		<div class="content">
@@ -328,6 +329,13 @@
 					</tr>
 				</table>
 			</section>
+			<section id="svar_edit">
+				<h2>Experimental hangair variable editor</h2>
+				Each table corresponds to a script running on hangair's raspi. Typechecking can be disabled, however it is not recommended, RCE is definitelly possible without it.
+				Once the hangair sends the 'init' signal, this section will be populated with tables.<br>
+				Typechecker runs at push-time, and will reject any non-matching types if enabled.
+				<div id="svar_tables"></div>
+			</section>
 		</div>
 	</div>
 
@@ -349,6 +357,7 @@
 			"Fix": "drone_gps_status",
 			"Current": "current"
 		}
+		var svars = {}
 		// Connect to the server
 		const socket = io();
 
@@ -512,11 +521,99 @@
 
 		socket.on('error', (text) => {
 			console.error(`Server reported error: ${text}`)
-			displayErr(text)
+			displayErr(text, 7000)
 		})
 
+		socket.on("s_vars", (vars) =>  {
+			console.log(vars)
+			svars = vars;
+			let buf = "";
+			let short_file;
+			Object.keys(vars).forEach(file => {
+				short_file = (file.indexOf("/") == -1)? file.split("\\")[file.split("\\").length - 1] : file.split("/")[file.split("/").length - 1];
+				buf += `<table id='${short_file}'><tr><th>${short_file}</th><th>${file}</th></tr><tr><th>Variable</th><th>Comment</th><th>Default</th><th>Value</th><th>Type</th><th>Typecheck</th><th>Push</th></tr>`;
+				Object.keys(vars[file]).forEach(variable => {
+					let type = eval(`typeof ${eval(vars[file][variable]["default"])}`)
+					if (type == "undefined"){
+						type = "string"
+					}
+					buf += `<tr><td>${variable}</td><td>${vars[file][variable]["comment"]}</td><td>${vars[file][variable]["default"]}</td><td><input value='${vars[file][variable]["value"]}' onkeyup=typechecker(this)></td><td data-type=${type} style="background-color: green"><p>${type}</p></td><td><input onchange=toggleCheck(this) type="checkbox" checked></td><td><input type="checkbox"></td></tr>`;
+				})
+				buf += "</table>";
+			});
+			buf += `<div style="text-align:center"><button type=button onclick=pushVars()>Push</button></div>`
+			document.getElementById("svar_tables").innerHTML = buf;
+		})
 
-		function displayErr(txt){
+		function typechecker(el){
+			let type;
+			try{
+				type = eval(`typeof ${eval(el.value)}`)
+				if (type == "undefined"){
+					type = "string"
+				}
+			} catch {
+				type = "string"
+			}
+			console.log(el.dataset)
+			if (el.parentElement.nextElementSibling.dataset["type"] != type){
+				el.parentElement.nextElementSibling.style.backgroundColor = "red"
+			} else {
+				el.parentElement.nextElementSibling.style.backgroundColor = "green"
+			}
+			if (el.value == el.parentElement.previousElementSibling.textContent){
+				el.parentElement.nextElementSibling.nextElementSibling.nextElementSibling.childNodes[0].checked = false
+			} else {
+				el.parentElement.nextElementSibling.nextElementSibling.nextElementSibling.childNodes[0].checked = true
+			}
+		}
+		function toggleCheck(el){
+			if (el.checked == true){
+				return
+			}
+			displayErr(`Typechecker for ${el.parentElement.parentElement.childNodes[0].textContent} disabled!`, 3000)
+		}
+		function pushVars(){
+			let container = document.getElementById("svar_tables")
+			if (container.childNodes.length <= 1){
+				displayErr("No tables to push!")
+			}
+			let data = {}
+			let cnt = 0
+			Array.prototype.slice.call(container.childNodes).forEach(table => {
+				if (table.children[0].children.length == 2 || table.tagName.toLowerCase()=="div"){
+					return;
+				}
+				data[table.id] = {}
+				cnt = 0
+				Array.prototype.slice.call(table.children[0].children).forEach(tr => {
+					if (cnt < 2){
+						cnt++;
+						return;
+					}
+
+					if (tr.children[6].children[0].checked == true){
+						console.log(tr)
+						if (tr.children[4].style.backgroundColor == "red" && tr.children[5].children[0].checked == true){
+							displayErr(`Typechecking error on ${tr.children[0].textContent}, skipping!`, 4500)
+							return;
+						}
+						data[table.id][tr.children[0].textContent] = tr.children[3].children[0].value
+					}
+				})
+				console.log(data[table.id] == {})
+				if (Object.keys(data[table.id]).length == 0){
+					delete data[table.id]
+				}
+			})
+			console.log(data)
+			if (Object.keys(data).length == 0){
+				displayErr("Nothing to push!", 4000)
+				return;
+			}
+
+		}
+		function displayErr(txt, secs){
 			document.getElementsByClassName("top-bar")[0].innerHTML = `
 				<div id="anim-container" data-findme="rpl">
 					<div id="animated-text-strip">
@@ -537,7 +634,7 @@
 				</div>`.replaceAll("rpl", txt) + document.getElementsByClassName("top-bar")[0].innerHTML
 			document.getElementsByClassName("content")[0].style.padding = `${parseInt(document.getElementsByClassName("content")[0].style.padding.replaceAll("px", "")) + 80}px`
 			document.getElementsByClassName("left-menu")[0].style.paddingTop = `${parseInt(document.getElementsByClassName("left-menu")[0].style.paddingTop.replaceAll("px", "")) + 80}px`
-			setTimeout(deleteErr.bind(null, txt), 7000)
+			setTimeout(deleteErr.bind(null, txt), secs)
 		}
 		function deleteErr(txt){
 			Array.prototype.slice.call(document.querySelectorAll("#anim-container")).forEach(el => {

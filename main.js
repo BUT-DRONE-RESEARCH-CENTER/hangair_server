@@ -3,7 +3,6 @@ const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 const axios = require('axios');
-const { type } = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,7 +10,8 @@ const io = socketIO(server);
 
 var pos_history = [];
 var last_packet = {};
-var hangair_ip = ""
+var hangair_ip = "";
+var s_vars = {};
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -35,10 +35,18 @@ app.post("/packet", (req, res) => {
 	res.send("ok");
 });
 
+app.post("/init", (req, res) => {
+	hangair_ip = req.ip;
+	s_vars = req.body;
+	io.emit("s_vars", s_vars);
+	res.status(200).send("ok");
+});
+
 // Socket.io connection event
 io.on('connection', (socket) => {
 	console.log('A client connected');
 	socket.emit("packet", last_packet);
+	socket.emit("s_vars", s_vars);
 	// Handle socket events here
 
 	// Socket.io disconnection event
