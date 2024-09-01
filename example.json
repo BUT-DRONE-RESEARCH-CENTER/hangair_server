@@ -1,16 +1,4 @@
-import requests
-import os
-# URL for the POST request
-url = "http://localhost:3000/init"
-
-# Sample JSON data to send
-data = {
-    "Voltage": 123,
-    "Latitude": 48.1486,
-    "Longitude": 17.1077,
-}
-
-data = {'e:\\Egithub\\peripherals_hangar\\general\\cam.py': {'VID_DIR': {'value': '"vids"', 'default': '"vids"', 'comment': ''
+{'e:\\Egithub\\peripherals_hangar\\general\\cam.py': {'VID_DIR': {'value': '"vids"', 'default': '"vids"', 'comment': ''
 		}, 'BACKUP_COUNT': {'value': '8', 'default': '8', 'comment': ''
 		}, 'MAX_FILE_SIZE': {'value': '1024 * 1024 * 200', 'default': '1024 * 1024 * 200', 'comment': ''
 		}, 'FPS_IN': {'value': '5', 'default': '5', 'comment': ''
@@ -33,12 +21,3 @@ data = {'e:\\Egithub\\peripherals_hangar\\general\\cam.py': {'VID_DIR': {'value'
 		}
 	}
 }
-
-print(__file__, __file__.split(os.sep)[-1].split(".")[0])
-# Making the POST request
-response = requests.post(url, json=data)
-
-
-# Print the response (status code and content)
-print(f"Status Code: {response.status_code}")
-print(f"Response Content: {response.text}")
