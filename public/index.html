@@ -330,7 +330,7 @@
 				</table>
 			</section>
 			<section id="svar_edit">
-				<h2>Experimental hangair variable editor</h2>
+				<h2>Hangair (s_var) variable editor</h2>
 				Each table corresponds to a script running on hangair's raspi. Typechecking can be disabled, however it is not recommended, RCE is definitelly possible without it.
 				Once the hangair sends the 'init' signal, this section will be populated with tables.<br>
 				Typechecker runs at push-time, and will reject any non-matching types if enabled.
@@ -611,7 +611,7 @@
 				displayErr("Nothing to push!", 4000)
 				return;
 			}
-
+			socket.emit("s_var_push", data);
 		}
 		function displayErr(txt, secs){
 			document.getElementsByClassName("top-bar")[0].innerHTML = `
